@@ -1,5 +1,6 @@
 from pydantic import BaseModel
 
 
-class Item(BaseModel):
+class Text(BaseModel):
     company_name: str
+    description: str
