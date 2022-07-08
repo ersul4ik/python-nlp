@@ -14,6 +14,6 @@ The app should have:
 - [x] API should have ability to receive data from the requester payload
 - [x] API should have ability to split received data before storing it on DB
 - [x] API should have ability to search by world.
-- [ ] Add a database:
-  - [ ] store request from user
-  
+- [x] Add a function to correct words (spelling)
+- [ ] Describe the API required schema (query strings, body)
+- 

@@ -7,6 +7,7 @@ from fastapi.exceptions import RequestValidationError
 from starlette import status
 from starlette.responses import JSONResponse
 import motor.motor_asyncio
+from textblob import Word
 
 from models import Text
 from services import get_words, company_helper
@@ -15,7 +16,7 @@ app = FastAPI()
 nltk.download('punkt')
 MONGO_DETAILS = getenv('MONGO_URL')
 client = motor.motor_asyncio.AsyncIOMotorClient(MONGO_DETAILS)
-database = client.parser
+database = client.parser.get_collection("companies")
 
 
 @app.exception_handler(RequestValidationError)
@@ -33,8 +34,7 @@ async def validation_exception_handler(
 async def create_company(payload: Text):
     """Creates companies"""
     words = get_words(payload.description)
-    company_collection = database.get_collection("companies")
-    company_collection.insert_one({'company_name': payload.company_name, 'description_key_words': words})
+    database.insert_one({'company_name': payload.company_name, 'description_key_words': words})
     return {'company_name': payload.company_name}
 
 
@@ -42,17 +42,19 @@ async def create_company(payload: Text):
 async def get_companies():
     """Returns companies."""
     companies = []
-    async for company in database.get_collection("companies").find():
+    async for company in database.find():
         companies.append(company_helper(company))
     return {'companies': companies}
 
 
 @app.get("/companies/search/")
-async def search_company(value: str):
+async def search_company(value: str, correct_words: bool = False):
     """Search companies by given value."""
     companies = []
-    company_collection = database.get_collection("companies")
-    results = company_collection.find({'description_key_words': value})
+    if correct_words:
+        value = Word(value).correct()
+
+    results = database.find({'description_key_words': value})
     async for company in results:
         companies.append(company_helper(company))
     return {'results': companies}
